@@ -17,3 +17,6 @@ Search for sessions that Citrix report as being disconnected where that session 
 
 ## Citrix-StudioAccess.ps1
 Show all individual Citrix XenApp 7.x admins as defined in Studio by using the Active Directory PowerShell module to recursively expand groups.
+
+## Citrix-DirectorOData.ps1
+Send queries to a Citrix Delivery Controller or Citrix Cloud and present the results back as PowerShell objects
