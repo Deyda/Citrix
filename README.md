@@ -1,7 +1,7 @@
 # Citrix
 
 ## Citrix-CloseDisconnectedSessions.ps1
-Script to find and close disconnected session
+Find disconnected XenApp sessions disconnected over a specified threshold and terminate them. Can also terminate specified processes in case they are preventing logoff.
 
 ## Citrix-EnableSSL-DDC.ps1
 Script to enable SSL on DDC (Version >= 1912)
