@@ -20,9 +20,3 @@ Search for sessions that Citrix report as being disconnected where that session 
 
 ## Citrix-StudioAccess.ps1
 Show all individual Citrix XenApp 7.x admins as defined in Studio by using the Active Directory PowerShell module to recursively expand groups.
-
-## Citrix-StoreFrontLogLevel.ps1
-Change the logging level of StoreFront servers or show the current trace level(s). Will warn when the settings are not consistent on a server.
-
-## Citrix-StoreFrontLogParse.ps1
-Produce grid view or csv report of Citrix StoreFront logs
