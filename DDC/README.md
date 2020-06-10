@@ -20,3 +20,6 @@ Show all individual Citrix XenApp 7.x admins as defined in Studio by using the A
 
 ## Citrix-DirectorOData.ps1
 Send queries to a Citrix Delivery Controller or Citrix Cloud and present the results back as PowerShell objects
+
+## Citrix-MigrateApps.ps1
+Export and Import Apps out of a Desktop Group to another Site (save as CSV file)
