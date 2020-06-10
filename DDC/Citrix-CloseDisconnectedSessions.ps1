@@ -155,7 +155,7 @@ if( $disconnected -and $disconnected.Count -gt 0 )
         if( ! [String]::IsNullOrEmpty($logfile) )
         {    
             $parts = $logfile.split(".")
-            $logfile = $parts[0] + "-" + $(get-date -f yyyy-MM-dd) + "." + $parts[1]
+            $logfile = $parts[0] + "-" + $(get-date -f yyyy-MM-dd-HH-mm) + "." + $parts[1]
 	    $disconnected | Select-Object -Property @{n='Sampled';e={Get-Date}},Username,StartTime,UntrustedUserName,SessionStateChangeTime,HostedMachineName,ClientName,ClientAddress,CatalogName,DesktopGroupName,ControllerDNSName,HostingServerName,ProcessesKilled | Export-Csv -NoTypeInformation -Append -Path $logfile
         }
 
