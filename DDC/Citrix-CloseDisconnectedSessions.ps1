@@ -28,7 +28,8 @@ Do not prompt for confirmation before terminating stuck processes and disconnect
 
 .PARAMETER logfile
 
-A csv file that will be appended to with details of the sessions terminated
+A csv file that will be appended to with details of the sessions terminated. Don't use Dots in the Filename!
+For each run a logfile is created with timestamp in the filename
 
 .PARAMETER killProcesses
 
@@ -36,11 +37,12 @@ A comma separated list of processes to terminate if they are running in the user
 
 .EXAMPLE
 
-& '.\Citrix-CloseDisconnectedSessions.ps1' -threshold 8:30 -ddc ctxddc01 -killProcesses stuckprocess,anotherstuckprocess -logfile c:\support\disconnected.terminations.csv
+& '.\Citrix-CloseDisconnectedSessions.ps1' -threshold 8:30 -ddc ctxddc01 -killProcesses stuckprocess,anotherstuckprocess -logfile c:\temp\disconnected-terminations.csv
 
 End all disconnected sessions found via delivery controller ctxddc01 which have been disconnected for more than 8 hours 30 minutes.
 If there are processes still running, before the session is ternminated, called stuckprocessor or anotherstuckprocess they will be terminated.
-Results will be appended to the CSV file c:\support\disconnected.terminations.csv
+Results will be appended to the CSV file c:\temp\disconnected-terminations.csv (Don't use a dot in the filename). 
+For each run a logfile is created with timestamp in the filename.
 
 #>
 
@@ -150,7 +152,9 @@ if( $disconnected -and $disconnected.Count -gt 0 )
     {
         if( ! [String]::IsNullOrEmpty($logfile) )
         {    
-            $disconnected | Select-Object -Property @{n='Sampled';e={Get-Date}},Username,StartTime,UntrustedUserName,SessionStateChangeTime,HostedMachineName,ClientName,ClientAddress,CatalogName,DesktopGroupName,ControllerDNSName,HostingServerName,ProcessesKilled | Export-Csv -NoTypeInformation -Append -Path $logfile
+            $parts = $logfile.split(".")
+            $logfile = $parts[0] + "-" + $(get-date -f yyyy-MM-dd) + "." + $parts[1]
+	    $disconnected | Select-Object -Property @{n='Sampled';e={Get-Date}},Username,StartTime,UntrustedUserName,SessionStateChangeTime,HostedMachineName,ClientName,ClientAddress,CatalogName,DesktopGroupName,ControllerDNSName,HostingServerName,ProcessesKilled | Export-Csv -NoTypeInformation -Append -Path $logfile
         }
 
         $disconnected | Stop-BrokerSession
