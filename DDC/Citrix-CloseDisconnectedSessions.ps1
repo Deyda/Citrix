@@ -6,6 +6,8 @@
     Guy Leech, 2018
 
     Use this script at your own risk - no warranty provided
+    
+    Edit by Manuel Winkel 2020 - Timestamp in logfile filename.
 #>
 
 
