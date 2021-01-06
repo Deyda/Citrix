@@ -1,0 +1,33 @@
+<!--After configuring parameters, be sure to rename the file to InteractivePVSConfig.xml! -->
+<?xml version="1.0"?>
+<Settings>
+    <BaseSettings>
+        <!--Location of the PVS Powershell Snapin. Refer to Citrix PVS developers guide for your PVS version -->
+		<PVSModuleLocation>C:\Program Files\Citrix\Provisioning Services Console\Citrix.PVS.SnapIn.dll</PVSModuleLocation>
+        <!--Enter True if the script will be ran from remote PVS management station-->
+        <RemotePVS>True</RemotePVS>
+        <!--PVS Server FQDN-->
+        <RemotePVSServerFQDN>mypvsserver.domain.org</RemotePVSServerFQDN>
+        <!--PVS Server Port-->
+        <RemotePVSServerPort>54321</RemotePVSServerPort>
+	</BaseSettings>
+	<PVSSettings>
+        <!--Boot timeout when starting image build machine-->
+		<BootTimeout>180</BootTimeout>
+        <!--Shutdown timeout when stopping image build machine-->
+		<ShutdownTimeout>180</ShutdownTimeout>
+        <!--Name of the PVS collection where update VM's are located-->
+        <!--If collection is not specified the script will search for machine in maintenance mode with attached disk-->
+        <PVSUpdateCollection>Updates</PVSUpdateCollection>
+	</PVSSettings>
+	<PVSSyncTask>
+            <!--Specify True if PVS Sync Scheduled Task exists-->
+            <PVSSyncTask>True</PVSSyncTask>
+            <!--Name of the PVS Sync Scheduled Task-->
+            <syncTaskName>PVS_Sync</syncTaskName>
+            <!--Full path to the PVS Sync Scheduled Task-->
+            <syncTaskPath>\PVSTasks</syncTaskPath>
+            <!--Timeout for PVS Sync Task-->
+            <SyncTimeout>300</SyncTimeout>
+    </PVSSyncTask>
+</Settings>
