@@ -23,15 +23,23 @@
 #>
 
 Param(
-	[Parameter(Mandatory=$True,HelpMessage='Name of the Citrix Policy')]
-	[string]$Policy ,
-    [Parameter(Mandatory=$True,HelpMessage='New Priority')]
-    [int]$Priority ,
+    [Parameter(
+            Mandatory=$True,
+            HelpMessage='Name of the Citrix Policy',
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [string]$Policy,
+    [Parameter(
+            Mandatory=$True,
+            HelpMessage='New Priority',
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [int]$Priority,
     [string]$ddc = 'localhost'
 )
 
-#Load Citrix snappin
-Add-PSSnapIn citrix*
+#Load Citrix GPO Module
+Import-Module 'C:\Program Files\Citrix\Telemetry Service\TelemetryModule\Citrix.GroupPolicy.Commands.psm1'
 
 #Verify Delivery Controller value exists
 if ([string]::IsNullOrEmpty($ddc)) {
@@ -40,6 +48,7 @@ if ([string]::IsNullOrEmpty($ddc)) {
 }
 
 #Create PSDrive with Citrix Policies
-New-PSDrive -name LocalFarmGpo -PSProvider CitrixGroupPolicy -Controller $ddc
+New-PSDrive -name LocalFarmGpo -PSProvider CitrixGroupPolicy -Root \ -Controller $ddc
+$CitrixPolicy = Get-CtxGroupPolicy | Where-Object {$_.PolicyName -eq $Policy}
 
-Set-CtxGroupPolicy $Policy -Priority $Priority
+Set-CtxGroupPolicy $Policy -Priority $Priority -type $CitrixPolicy.type
