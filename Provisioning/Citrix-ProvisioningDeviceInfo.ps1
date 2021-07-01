@@ -61,6 +61,22 @@
     19/06/18    GL  Split main code into module so can re-use in other scripts
 
     20/06/18    GL  Added option to split VMware VM names in case have description, etc after an _ character or similar
+
+    21/01/21    GL  Added remove from delivery group option
+
+    16/06/21    GL  Bug fixes where full domain name passed as part of machine name to DDC actions
+#>
+
+<#
+Copyright © 2021 Guy Leech
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, 
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #>
 
 <#
@@ -182,19 +198,19 @@ Show full help via Get-Help cmdlet
 
 .EXAMPLE
 
-& '.\Citrix-ProvisioningDeviceInfo.ps1' -pvsservers pvsprod01,pvstest01 -ddcs ddctest02,ddcprod03
+& '.\Get PVS device info.ps1' -pvsservers pvsprod01,pvstest01 -ddcs ddctest02,ddcprod03
 
 Retrieve devices from the listed PVS servers, cross reference to the listed DDCs (list order does not matter) and display on screen in a sortable and filterable grid view
 
 .EXAMPLE
 
-& '.\Citrix-ProvisioningDeviceInfo.ps1' -pvsservers pvsprod01 -ddcs ddcprod03 -name CTXUAT -tags -dns -csv h:\pvs.ctxuat.csv
+& '.\Get PVS device info.ps1' -pvsservers pvsprod01 -ddcs ddcprod03 -name CTXUAT -tags -dns -csv h:\pvs.ctxuat.csv
 
 Retrieve devices matching regular expression CTXUAT from the listed PVS server, cross reference to the listed DDC and output to the given csv file, including Citrix tag information and IPv4 address from DNS query
 
 .EXAMPLE
 
-& '.\Citrix-ProvisioningDeviceInfo.ps1' -pvsservers pvsprod01 -ddcs ddcprod03 -ADGroups '^GRP-' -hypervisors vmware01 -vmPattern '^CTX[15]\d{3}$'
+& '.\Get PVS device info.ps1' -pvsservers pvsprod01 -ddcs ddcprod03 -ADGroups '^GRP-' -hypervisors vmware01 -vmPattern '^CTX[15]\d{3}$'
 
 Retrieve all devices from the listed PVS server, cross reference to the listed DDC and VMware, including AD groups which start withg "GRP", and output to an on-screen grid view
 
@@ -370,6 +386,7 @@ $pvsDeviceActionerXAML = @'
                         <MenuItem Header="Maintenance Mode On" Name="DDCMaintModeOnContextMenu" />
                         <MenuItem Header="Maintenance Mode Off" Name="DDCMaintModeOffContextMenu" />
                         <MenuItem Header="Message Users" Name="DDCMessageUsersContextMenu" />
+                        <MenuItem Header="Remove from Delivery Group" Name="DDCRemoveDeliveryGroupContextMenu" />
                         <MenuItem Header="Delete" Name="DDCDeleteContextMenu" />
                     </MenuItem>
                     <MenuItem Header="AD" Name="ADContextMenu">
@@ -564,14 +581,20 @@ Function Perform-Action( [string]$action , $form )
     {
         Write-Verbose "Action $action on $($device.Name)"
 
+        [string]$FQDN = $device.Name
+        if( ! [string]::IsNullOrEmpty( $device.DomainName ) )
+        {
+            $FQDN = ( $device.DomainName -split '\.')[0] + '\' +  $device.Name
+        }
         switch -regex ( $action )
         {
-            'Message' { Get-BrokerSession -AdminAddress $device.ddc -MachineName ( $env:USERDOMAIN + '\' +  $device.Name ) | Send-BrokerSessionMessage -AdminAddress $device.ddc -Title $WPFtxtMessageCaption.Text -Text $WPFtxtMessageBody.Text -MessageStyle ($WPFcomboMessageStyle.SelectedItem.Content)  ;break }
+            'Message' { Get-BrokerSession -AdminAddress $device.ddc -MachineName $FQDN | Send-BrokerSessionMessage -AdminAddress $device.ddc -Title $WPFtxtMessageCaption.Text -Text $WPFtxtMessageBody.Text -MessageStyle ($WPFcomboMessageStyle.SelectedItem.Content)  ;break }
             'Remove From AD' { Remove-ADComputer -Identity $device.Name -Confirm:$False ;break }
-            'Remove From DDC' { Remove-BrokerMachine -Force -AdminAddress $device.ddc -MachineName $( if( [string]::IsNullOrEmpty( $device.DomainName ) ) { $device.Name } else {  $device.DomainName + '\' +  $device.Name } ) ; break  }
+            'Remove From Delivery Group' { Remove-BrokerMachine -Force -DesktopGroup $device.'Delivery Group' -AdminAddress $device.ddc -MachineName $FQDN ; break  }
+            'Remove From DDC' { Remove-BrokerMachine -Force -AdminAddress $device.ddc -MachineName $FQDN ; break  }
             'Remove From PVS' { Set-PvsConnection -Server $device.'PVS Server'; Remove-PvsDevice -DeviceName $device.Name ; break }
-            'Maintenance Mode On'  { Set-BrokerMachine -AdminAddress $device.ddc -InMaintenanceMode $true  -MachineName ( $device.DomainName + '\' +  $device.Name ) ; break }
-            'Maintenance Mode Off' { Set-BrokerMachine -AdminAddress $device.ddc -InMaintenanceMode $false -MachineName ( $device.DomainName + '\' +  $device.Name ) ; break }
+            'Maintenance Mode On'  { Set-BrokerMachine -AdminAddress $device.ddc -InMaintenanceMode $true  -MachineName $FQDN ; break }
+            'Maintenance Mode Off' { Set-BrokerMachine -AdminAddress $device.ddc -InMaintenanceMode $false -MachineName $FQDN ; break }
             'Reboot' { Restart-Computer -ComputerName $device.Name ; break }
             'Shutdown' { Stop-Computer -ComputerName $device.Name ; break }
             'Remove from Hypervisor' { Get-VM -Name $device.Name | Remove-VM -DeletePermanently -Confirm:$false ;break }
@@ -653,82 +676,6 @@ Function Perform-Action( [string]$action , $form )
     
     Display-MessageBox -window $thisWindow -text "$errors / $($WPFlstMachines.SelectedItems.Count) errors" -caption "Finished $action" -buttons OK -icon $status
 }
-
-<#
-Function Get-RemoteInfo( [string]$computer , [int]$cpuSamples , [int]$jobTimeout )
-{
-    [hashtable]$results = @{}
-
-    [scriptblock]$code = `
-    {
-        Param([string]$computer,[int]$cpuSamples)
-        Invoke-Command -ComputerName $computer -ScriptBlock `
-        {
-            $osinfo = Get-CimInstance Win32_OperatingSystem
-            $logicalDisks = Get-CimInstance -ClassName Win32_logicaldisk -Filter 'DriveType = 3'
-            $cpu = $(if( $using:cpuSamples -gt 0 ) { [math]::Round( ( Get-Counter -Counter '\Processor(*)\% Processor Time' -SampleInterval 1 -MaxSamples $using:cpuSamples |select -ExpandProperty CounterSamples| Where-Object { $_.InstanceName -eq '_total' } | select -ExpandProperty CookedValue  | Measure-Object -Average ).Average , 1 ) }) -as [int]
-            $domainMembership = Test-ComputerSecureChannel
-            $osinfo,$logicalDisks,$cpu,$domainMembership 
-        }    
-    }
-
-    try
-    {
-        ## use a runspace so we can have a timeout  
-        $runspace = [RunspaceFactory]::CreateRunspace()
-        $runspace.Open()
-        $command = [PowerShell]::Create().AddScript($code)
-        $command.Runspace = $runspace
-        $null = $command.AddParameters( @( $computer , $cpuSamples ) )
-        $job = $command.BeginInvoke()
-
-        ## wait for command to finish
-        $wait = $job.AsyncWaitHandle.WaitOne( $jobTimeout * 1000 , $false )
-
-        if( $wait -or $job.IsCompleted )
-        {
-            if( $command.HadErrors )
-            {
-                Write-Warning "Errors occurred in remote command on $computer :`n$($command.Streams.Error)"
-            }
-            else
-            {
-                $osinfo,$logicalDisks,$cpu,$domainMembership = $command.EndInvoke($job)
-                if( $osinfo ) ## assume that if this is not null then we at least got some info - need to avoid divide by zero
-                {
-                    $results = 
-                    @{
-                        'Boot_Time' = $osinfo.LastBootUpTime
-                        'Available Memory (GB)' = [Math]::Round( $osinfo.FreePhysicalMemory / 1MB , 1 )
-                        'Committed Memory %' = 100 - [Math]::Round( ( $osinfo.FreeVirtualMemory / $osinfo.TotalVirtualMemorySize ) * 100 , 1 )
-                        'CPU Usage %' = $cpu
-                        'Free disk space %' = ( $logicalDisks | Sort DeviceID | ForEach-Object { [Math]::Round( ( $_.FreeSpace / $_.Size ) * 100 , 1 ) }) -join ' '
-                        'Domain Membership' = $( if( $domainMembership ) { 'OK' } else { 'Bad' } )
-                    }
-                }  
-                else
-                {
-                    Write-Warning "No data returned from remote command on $computer"
-                }
-            }   
-            ## if we do these after timeout too then takes an age to return which defeats the point of running via a runspace
-            $command.Dispose() 
-            $runSpace.Dispose()
-        }
-        else
-        {
-            Write-Warning "Job to retrieve info from $computer is still running after $jobTimeout seconds so aborting"
-            $null = $command.BeginStop($null,$null)
-            ## leaking command and runspace but if we dispose it hangs
-        }
-    }   
-    catch
-    {
-        Write-Error "Failed to get remote info from $computer : $($_.ToString())"
-    }
-    $results
-}
-#>
 
 if( $noProgress )
 {
@@ -845,6 +792,8 @@ if( $devices -and $devices.Count )
             }
             
             $WPFDDCMessageUsersContextMenu.Add_Click({ Perform-Action -action Message -form $mainForm })
+            
+            $WPFDDCRemoveDeliveryGroupContextMenu.Add_Click({ Perform-Action -action 'Remove From Delivery Group' -form $mainForm })
             $WPFDDCDeleteContextMenu.Add_Click({ Perform-Action -action 'Remove From DDC' -form $mainForm })
             $WPFDDCMaintModeOffContextMenu.Add_Click({ Perform-Action -action 'Maintenance Mode Off' -form $mainForm })
             $WPFDDCMaintModeOnContextMenu.Add_Click({ Perform-Action -action 'Maintenance Mode On'  -form $mainForm })
@@ -880,3 +829,77 @@ if( ( Get-Variable global:DefaultVIServers -ErrorAction SilentlyContinue ) -and 
 {
     Disconnect-VIServer -Server $hypervisors -Force -Confirm:$false
 }
+
+# SIG # Begin signature block
+# MIINRQYJKoZIhvcNAQcCoIINNjCCDTICAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
+# gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUW2Cqo9USKdmv/JzYUVM6xUL3
+# jKqgggqHMIIFMDCCBBigAwIBAgIQBAkYG1/Vu2Z1U0O1b5VQCDANBgkqhkiG9w0B
+# AQsFADBlMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYD
+# VQQLExB3d3cuZGlnaWNlcnQuY29tMSQwIgYDVQQDExtEaWdpQ2VydCBBc3N1cmVk
+# IElEIFJvb3QgQ0EwHhcNMTMxMDIyMTIwMDAwWhcNMjgxMDIyMTIwMDAwWjByMQsw
+# CQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3d3cu
+# ZGlnaWNlcnQuY29tMTEwLwYDVQQDEyhEaWdpQ2VydCBTSEEyIEFzc3VyZWQgSUQg
+# Q29kZSBTaWduaW5nIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
+# +NOzHH8OEa9ndwfTCzFJGc/Q+0WZsTrbRPV/5aid2zLXcep2nQUut4/6kkPApfmJ
+# 1DcZ17aq8JyGpdglrA55KDp+6dFn08b7KSfH03sjlOSRI5aQd4L5oYQjZhJUM1B0
+# sSgmuyRpwsJS8hRniolF1C2ho+mILCCVrhxKhwjfDPXiTWAYvqrEsq5wMWYzcT6s
+# cKKrzn/pfMuSoeU7MRzP6vIK5Fe7SrXpdOYr/mzLfnQ5Ng2Q7+S1TqSp6moKq4Tz
+# rGdOtcT3jNEgJSPrCGQ+UpbB8g8S9MWOD8Gi6CxR93O8vYWxYoNzQYIH5DiLanMg
+# 0A9kczyen6Yzqf0Z3yWT0QIDAQABo4IBzTCCAckwEgYDVR0TAQH/BAgwBgEB/wIB
+# ADAOBgNVHQ8BAf8EBAMCAYYwEwYDVR0lBAwwCgYIKwYBBQUHAwMweQYIKwYBBQUH
+# AQEEbTBrMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5kaWdpY2VydC5jb20wQwYI
+# KwYBBQUHMAKGN2h0dHA6Ly9jYWNlcnRzLmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydEFz
+# c3VyZWRJRFJvb3RDQS5jcnQwgYEGA1UdHwR6MHgwOqA4oDaGNGh0dHA6Ly9jcmw0
+# LmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydEFzc3VyZWRJRFJvb3RDQS5jcmwwOqA4oDaG
+# NGh0dHA6Ly9jcmwzLmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydEFzc3VyZWRJRFJvb3RD
+# QS5jcmwwTwYDVR0gBEgwRjA4BgpghkgBhv1sAAIEMCowKAYIKwYBBQUHAgEWHGh0
+# dHBzOi8vd3d3LmRpZ2ljZXJ0LmNvbS9DUFMwCgYIYIZIAYb9bAMwHQYDVR0OBBYE
+# FFrEuXsqCqOl6nEDwGD5LfZldQ5YMB8GA1UdIwQYMBaAFEXroq/0ksuCMS1Ri6en
+# IZ3zbcgPMA0GCSqGSIb3DQEBCwUAA4IBAQA+7A1aJLPzItEVyCx8JSl2qB1dHC06
+# GsTvMGHXfgtg/cM9D8Svi/3vKt8gVTew4fbRknUPUbRupY5a4l4kgU4QpO4/cY5j
+# DhNLrddfRHnzNhQGivecRk5c/5CxGwcOkRX7uq+1UcKNJK4kxscnKqEpKBo6cSgC
+# PC6Ro8AlEeKcFEehemhor5unXCBc2XGxDI+7qPjFEmifz0DLQESlE/DmZAwlCEIy
+# sjaKJAL+L3J+HNdJRZboWR3p+nRka7LrZkPas7CM1ekN3fYBIM6ZMWM9CBoYs4Gb
+# T8aTEAb8B4H6i9r5gkn3Ym6hU/oSlBiFLpKR6mhsRDKyZqHnGKSaZFHvMIIFTzCC
+# BDegAwIBAgIQBP3jqtvdtaueQfTZ1SF1TjANBgkqhkiG9w0BAQsFADByMQswCQYD
+# VQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3d3cuZGln
+# aWNlcnQuY29tMTEwLwYDVQQDEyhEaWdpQ2VydCBTSEEyIEFzc3VyZWQgSUQgQ29k
+# ZSBTaWduaW5nIENBMB4XDTIwMDcyMDAwMDAwMFoXDTIzMDcyNTEyMDAwMFowgYsx
+# CzAJBgNVBAYTAkdCMRIwEAYDVQQHEwlXYWtlZmllbGQxJjAkBgNVBAoTHVNlY3Vy
+# ZSBQbGF0Zm9ybSBTb2x1dGlvbnMgTHRkMRgwFgYDVQQLEw9TY3JpcHRpbmdIZWF2
+# ZW4xJjAkBgNVBAMTHVNlY3VyZSBQbGF0Zm9ybSBTb2x1dGlvbnMgTHRkMIIBIjAN
+# BgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAr20nXdaAALva07XZykpRlijxfIPk
+# TUQFAxQgXTW2G5Jc1YQfIYjIePC6oaD+3Zc2WN2Jrsc7bj5Qe5Nj4QHHHf3jopLy
+# g8jXl7Emt1mlyzUrtygoQ1XpBBXnv70dvZibro6dXmK8/M37w5pEAj/69+AYM7IO
+# Fz2CrTIrQjvwjELSOkZ2o+z+iqfax9Z1Tv82+yg9iDHnUxZWhaiEXk9BFRv9WYsz
+# qTXQTEhv8fmUI2aZX48so4mJhNGu7Vp1TGeCik1G959Qk7sFh3yvRugjY0IIXBXu
+# A+LRT00yjkgMe8XoDdaBoIn5y3ZrQ7bCVDjoTrcn/SqfHvhEEMj1a1f0zQIDAQAB
+# o4IBxTCCAcEwHwYDVR0jBBgwFoAUWsS5eyoKo6XqcQPAYPkt9mV1DlgwHQYDVR0O
+# BBYEFE16ovlqIk5uX2JQy6og0OCPrsnJMA4GA1UdDwEB/wQEAwIHgDATBgNVHSUE
+# DDAKBggrBgEFBQcDAzB3BgNVHR8EcDBuMDWgM6Axhi9odHRwOi8vY3JsMy5kaWdp
+# Y2VydC5jb20vc2hhMi1hc3N1cmVkLWNzLWcxLmNybDA1oDOgMYYvaHR0cDovL2Ny
+# bDQuZGlnaWNlcnQuY29tL3NoYTItYXNzdXJlZC1jcy1nMS5jcmwwTAYDVR0gBEUw
+# QzA3BglghkgBhv1sAwEwKjAoBggrBgEFBQcCARYcaHR0cHM6Ly93d3cuZGlnaWNl
+# cnQuY29tL0NQUzAIBgZngQwBBAEwgYQGCCsGAQUFBwEBBHgwdjAkBggrBgEFBQcw
+# AYYYaHR0cDovL29jc3AuZGlnaWNlcnQuY29tME4GCCsGAQUFBzAChkJodHRwOi8v
+# Y2FjZXJ0cy5kaWdpY2VydC5jb20vRGlnaUNlcnRTSEEyQXNzdXJlZElEQ29kZVNp
+# Z25pbmdDQS5jcnQwDAYDVR0TAQH/BAIwADANBgkqhkiG9w0BAQsFAAOCAQEAU9zO
+# 9UpTkPL8DNrcbIaf1w736CgWB5KRQsmp1mhXbGECUCCpOCzlYFCSeiwH9MT0je3W
+# aYxWqIpUMvAI8ndFPVDp5RF+IJNifs+YuLBcSv1tilNY+kfa2OS20nFrbFfl9QbR
+# 4oacz8sBhhOXrYeUOU4sTHSPQjd3lpyhhZGNd3COvc2csk55JG/h2hR2fK+m4p7z
+# sszK+vfqEX9Ab/7gYMgSo65hhFMSWcvtNO325mAxHJYJ1k9XEUTmq828ZmfEeyMq
+# K9FlN5ykYJMWp/vK8w4c6WXbYCBXWL43jnPyKT4tpiOjWOI6g18JMdUxCG41Hawp
+# hH44QHzE1NPeC+1UjTGCAigwggIkAgEBMIGGMHIxCzAJBgNVBAYTAlVTMRUwEwYD
+# VQQKEwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5jb20xMTAv
+# BgNVBAMTKERpZ2lDZXJ0IFNIQTIgQXNzdXJlZCBJRCBDb2RlIFNpZ25pbmcgQ0EC
+# EAT946rb3bWrnkH02dUhdU4wCQYFKw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAI
+# oAKAAKECgAAwGQYJKoZIhvcNAQkDMQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIB
+# CzEOMAwGCisGAQQBgjcCARUwIwYJKoZIhvcNAQkEMRYEFFYfMu+G8J/nL6O4wDb4
+# jFwod8zYMA0GCSqGSIb3DQEBAQUABIIBAGlPM8Lt5qml+0FxmnQX45NTycPJBz4W
+# muZaFAgfT5eWQZ8/bB3UTCGX3k8u10k/uW12vWJGaHgGnEwUVuSEhuSIa3pXD2Zl
+# JQ0UJQeDtjMDiXBbJXVyMFp/caypLdmy/xMZVr83f2Wj2ZYXUTe1hbG8wbFWkoH+
+# 2H2t1aPx2T+/j8oNza89iNZH/xWrCRGIFBhn92KoNflSCA2EijbjAHJ4iwfpOZgV
+# WbEPWp35EdbLIAcN0tXBLNiRnVsZXsODTlvtDA4IGOmxYULwXjlmDnr1zTxUL3qW
+# spZDwbQzJiurDUK3m0QpmDjnLiinp0h7rmbGmSn4WAvBCEaR9rHi+rQ=
+# SIG # End signature block
