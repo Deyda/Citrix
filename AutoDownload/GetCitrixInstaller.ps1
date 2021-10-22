@@ -1,5 +1,6 @@
 #Example script to download multiple VDA and ISO versions from Citrix.com
 #Ryan Butler 2/6/2020
+#Manuel Winkel 2021-10-22 Customization
 
 #Speeds up the download (Thanks James Kindon)
 $ProgressPreference = "SilentlyContinue"
@@ -36,7 +37,7 @@ $CitrixPassword = $creds.GetNetworkCredential().Password
 $downloads = import-csv -Path ".\Helpers\Downloads.csv" -Delimiter ","
 
 #Use CTRL to select multiple
-$dls = $downloads | Out-GridView -PassThru -Title "Select VDA or ISO to download.  CTRL to select multiple"
+$dls = $downloads | Out-GridView -PassThru -Title "Select Installer or ISO to download. CTRL to select multiple"
 
 #Processes each download
 foreach ($dl in $dls) {
