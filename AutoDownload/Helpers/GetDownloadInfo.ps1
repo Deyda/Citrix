@@ -1,30 +1,35 @@
-$pages = @(
-    "https://www.citrix.com/downloads/citrix-virtual-apps-and-desktops/product-software/citrix-virtual-apps-and-desktops-1912.html",
-    'https://www.citrix.com/downloads/citrix-virtual-apps-and-desktops/product-software/citrix-virtual-apps-and-desktops-2109.html'
-)
-$ie = new-object -com internetexplorer.application
-$ie.visible = $true
-$final = @()
-foreach ($page in $pages) {
-    $ie.navigate($page)
-    while ($ie.Busy) {
-        start-Sleep -Milliseconds 100
-    }
+#Downloads Latest Citrix Opimizer from https://support.citrix.com/article/CTX224676
+#Can be used as part of a pipeline or MDT task sequence.
+#Ryan Butler TechDrabble.com @ryan_c_butler 07/19/2019
 
-    $dls = $ie.Document.getElementsByClassName("ctx-dl-link ctx-photo")
+#Uncomment to use plain text or env variables
+#$CitrixUserName = $env:citrixusername
+#$CitrixPassword = $env:citrixpassword
 
-    $links = $dls | Where-Object { ($_.rel -like "*.iso") -or ($_.rel -like "*.exe") -and ($_.rel -notlike "*CitrixStoreFront*") } | select rel
+#Uncomment to use credential object
+$creds = Get-Credential
+$CitrixUserName = $creds.UserName
+$CitrixPassword = $creds.GetNetworkCredential().Password
 
-    
-    foreach ($link in $links) {
-        $link.rel -match '(?<=DLID=)(.*)(?=&)'
-        $Matches[1]
+$downloadpath = "C:\temp\CitrixOptimizer.zip"
+$unzippath = "C:\temp\opt"
 
-        $final += [pscustomobject]@{
-            "dlnumber" = $Matches[1]
-            "filename" = $link.rel -split "/" | select -Last 1
-        }
-    }
+#Initialize Session 
+Invoke-WebRequest "https://identity.citrix.com/Utility/STS/Sign-In" -SessionVariable websession -UseBasicParsing
+
+#Set Form
+$form = @{
+	"persistent" = "1"
+	"userName" = $CitrixUserName
+	"loginbtn" = ""
+	"password" = $CitrixPassword
+	"returnURL" = "https://login.citrix.com/bridge?url=https://www.citrix.com/downloads/citrix-virtual-apps-and-desktops/product-software/citrix-virtual-apps-and-desktops-2109.html"
+	"errorURL" = "https://login.citrix.com?url=https://www.citrix.com/downloads/citrix-virtual-apps-and-desktops/product-software/citrix-virtual-apps-and-desktops-2109.html&err=y"
 }
+#Authenticate
+Invoke-WebRequest -Uri ("https://identity.citrix.com/Utility/STS/Sign-In") -WebSession $websession -Method POST -Body $form -ContentType "text/html" -UseBasicParsing
 
-$final
+$appURLVersion = "https://www.citrix.com/downloads/citrix-virtual-apps-and-desktops/edition-software/premium-2109.html"
+$webRequest = Invoke-WebRequest -WebSession $websession  -UseBasicParsing -Uri ($appURLVersion) -SessionVariable websession
+$regexAppVersion = "https://downloads.citrix.com.*"
+$webRequest.RawContent | Select-String -Pattern $regexAppVersion -AllMatches | ForEach-Object { $_.Matches.Value } | Select-Object -First 1
