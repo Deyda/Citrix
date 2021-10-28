@@ -28,22 +28,3 @@ Function to download ISO or VDA binary.  See **Helpers/Downloads.csv** for mappi
 |19803|ProfileMgmt_2109.zip|Profile Management 2109|
 |19430|CitrixStoreFront-x64.exe |StoreFront 1912 LTSR CU3|
 |19804|Citrix_Provisioning_2109.iso|Citrix Provisioning 2109|
-
-## Currently Works with
-| DL Number | Download |
-| --- | --- |
-|16834|Citrix_Virtual_Apps_and_Desktops_7_1912.iso|
-|16837|VDAServerSetup_1912.exe|
-|16838|VDAWorkstationSetup_1912.exe|
-|16839|VDAWorkstationCoreSetup_1912.exe|
-|16555|Citrix_Virtual_Apps_and_Desktops_7_1909.iso|
-|16558|VDAServerSetup_1909.exe|
-|16559|VDAWorkstationSetup_1909.exe|
-|16560|VDAWorkstationCoreSetup_1909.exe|
-|16107|Citrix_Virtual_Apps_and_Desktops_7_1906.iso|
-|16110|VDAServerSetup_1906.exe|
-|16111|VDAWorkstationSetup_1906.exe|
-|16112|VDAWorkstationCoreSetup_1906.exe|
-|15901|VDAServerSetup_1903.exe|
-|15902|VDAWorkstationSetup_1903.exe|
-|15903|VDAWorkstationCoreSetup_1903.exe|
