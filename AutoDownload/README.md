@@ -13,7 +13,7 @@ Function to download ISO or VDA binary.  See **Helpers/Downloads.csv** for mappi
 
 ## Currently Works with
 | DL Number | Download | Name |
-| --- | --- |
+| --- | --- | --- |
 |19425|Citrix_Virtual_Apps_and_Desktops_7_1912_3000.iso|Citrix Virtual Apps and Desktops 7 1912 CU3 ISO|
 |19426|VDAServerSetup_1912.exe|Citrix Virtual Apps and Desktops 7 1912 CU3 ISO|Multi-session OS Virtual Delivery Agent 1912 LTSR CU3|
 |19427|VDAWorkstationSetup_1912.exe|Single-session OS Virtual Delivery Agent 1912 LTSR CU3|
