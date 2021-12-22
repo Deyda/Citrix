@@ -1,22 +1,23 @@
 "dlnumber","filename","name"
-"19425","Citrix_Virtual_Apps_and_Desktops_7_1912_3000.iso","Citrix Virtual Apps and Desktops 7 1912 CU3 ISO"
-"19799","Citrix_Virtual_Apps_and_Desktops_7_2109.iso","Citrix Virtual Apps and Desktops 7 2109 ISO"
+"19993","Citrix_Virtual_Apps_and_Desktops_7_1912_4000.iso","Citrix Virtual Apps and Desktops 7 1912 CU4 ISO"
+"20115","Citrix_Virtual_Apps_and_Desktops_7_2112.iso","Citrix Virtual Apps and Desktops 7 2112 ISO"
 
-"19426","VDAServerSetup_1912.exe","Multi-session OS Virtual Delivery Agent 1912 LTSR CU3"
-"19427","VDAWorkstationSetup_1912.exe","Single-session OS Virtual Delivery Agent 1912 LTSR CU3"
-"19428","VDAWorkstationCoreSetup_1912.exe","Single-session OS Core Services Virtual Delivery Agent 1912 LTSR CU3"
-"19800","VDAServerSetup_2109.exe","Multi-session OS Virtual Delivery Agent 2109"
-"19801","VDAWorkstationSetup_2109.exe","Single-session OS Virtual Delivery Agent 2109"
-"19802","VDAWorkstationCoreSetup_2109.exe","Single-session OS Core Services Virtual Delivery Agent 2109"
+"19994","VDAServerSetup_1912.exe","Multi-session OS Virtual Delivery Agent 1912 LTSR CU4"
+"19995","VDAWorkstationSetup_1912.exe","Single-session OS Virtual Delivery Agent 1912 LTSR CU4"
+"19996","VDAWorkstationCoreSetup_1912.exe","Single-session OS Core Services Virtual Delivery Agent 1912 LTSR CU4"
 
-"19429","ProfileMgmt_1912.zip","Profile Management 1912 LTSR CU3"
-"19803","ProfileMgmt_2109.zip","Profile Management 2109"
+"20116","VDAServerSetup_2112.exe","Multi-session OS Virtual Delivery Agent 2112"
+"20117","VDAWorkstationSetup_2112.exe","Single-session OS Virtual Delivery Agent 2112"
+"20118","VDAWorkstationCoreSetup_2112.exe","Single-session OS Core Services Virtual Delivery Agent 2112"
 
-"19431","Citrix_Provisioning_1912_13.iso","Citrix Provisioning 1312 CU3"
-"19804","Citrix_Provisioning_2109.iso","Citrix Provisioning 2109"
+"19997","ProfileMgmt_1912.zip","Profile Management 1912 LTSR CU4"
+"19803","ProfileMgmt_2112.zip","Profile Management 2112"
 
-"9803","Citrix_Licensing_11.17.2.0_BUILD_36000.zip","License Server for Windows - Version 11.17.2.0 Build 36000"
+"19999","Citrix_Provisioning_1912_19.iso","Citrix Provisioning 1912 CU4"
+"20119","Citrix_Provisioning_2112.iso","Citrix Provisioning 2112"
 
-"19430","CitrixStoreFront-x64.exe ","StoreFront 1912 LTSR CU3"
+"9803","Citrix_Licensing_11.17.2.0_BUILD_37000.zip","License Server for Windows - Version 11.17.2.0 Build 37000"
 
-"19811","Workspace-Environment-Management-v-2109-01-00-01.zip","Workspace Environment Management 2109"
+"19998","CitrixStoreFront-x64.exe ","StoreFront 1912 LTSR CU4"
+
+"20209","Workspace-Environment-Management-v-2112-01-00-01.zip","Workspace Environment Management 2112"
