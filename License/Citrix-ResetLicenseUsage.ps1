@@ -28,6 +28,17 @@ Param(
         [string]$License
 )
 
+
+#Get Current Path
+$Environment = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
+
+#Add Items to Environment
+$AddPathItems = ";C:\Program Files (x86)\Citrix\Licensing\LS;"
+$Environment = $Environment.Insert($Environment.Length,$AddPathItems)
+
+#Set Updated Path
+[System.Environment]::SetEnvironmentVariable("Path", $Environment, "Machine")
+
 #Used licenses?!
 $FilePath = "C:\Script\Citrix_Used_License.txt"
 udadmin.exe -list -f "$License" | out-file $FilePath
@@ -40,7 +51,7 @@ ForEach ($lic in $Licenses) {udadmin.exe -f $License -user "$lic" -delete}
 ForEach ($lic in $Licenses) {udadmin.exe -f $License -device "$lic" -delete}
 
 #Restart licensing service
-$svc = (Get-Service -DisplayName "Citrix Licensing")
+$svc = (Get-Service -Name "Citrix Li*")
 Restart-Service -InputObject $svc -Verbose
 
 Exit
