@@ -10,36 +10,8 @@
 .EXAMPLE
     .\Citrix-ResetLicenseUsage.ps1 -License XDT_PLT_UD
 
-
-.NOTES
-  Author: Manuel Winkel (@deyda84)
-  Creation Date:  2022-03-04
-#>
-
-Param(
-    [Parameter(
-            Mandatory=$True,
-            HelpMessage='License Type',
-            ValuefromPipelineByPropertyName = $true
-        )]
-        [string]$License
-)
-
-<#
-.Synopsis
-   Change the priority of a citrix policy.
-.DESCRIPTION
-   The script prompts for the name of a citrix policy and the new priority to be set.
-
-.PARAMETER Policy
-    The name of the Citrix Policy.
-.PARAMETER Priority
-    New Priority for the Citrix Policy.
-.PARAMETER DDC
-    DDC to establish connection.
-
-.EXAMPLE
-    .\Citrix-ResetLicenseUsage.ps1 -License XDT_PLT_UD
+    Schedulded Task like:
+    C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -file "C:\Script\Citrix-ResetLicenseUsage.ps1"
 
 
 .NOTES
@@ -58,7 +30,6 @@ Param(
 
 #Used licenses?!
 $FilePath = "C:\Script\Citrix_Used_License.txt"
-set-location "C:\Program Files (x86)\Citrix\Licensing\LS"
 udadmin.exe -list -f "$License" | out-file $FilePath
 
 #Get license to delete
